@@ -3,18 +3,23 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OwnerModule } from './owner/owner.module';
+import { OwnerAuthModule } from './owner/auth/owner.auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [TypeOrmModule.forRoot({
+  imports: [ ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
       username: 'postgres',
       password: 'root',
-      database: 'ToolSharingDB', //Change to your database name
+      database: 'ToolSharingDB',
       autoLoadEntities: true,
       synchronize: true,
-    }),OwnerModule,],
+    }),OwnerModule, OwnerAuthModule,],
   controllers: [AppController],
   providers: [AppService],
 })
