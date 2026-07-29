@@ -33,7 +33,7 @@ export class OwnerAuthController {
         fileSize: 2 * 1024 * 1024, // 2 MB
       },
       storage: diskStorage({
-        destination: './uploads/profile',
+        destination: './uploads/owner_profile',
         filename: function (req, file, cb) {
           cb(null, Date.now() + file.originalname);
         },
