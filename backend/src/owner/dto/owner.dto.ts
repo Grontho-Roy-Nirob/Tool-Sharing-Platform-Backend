@@ -1,7 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class OwnerDTO {
-  
   @IsNotEmpty()
   @IsString()
   name!: string;
@@ -16,7 +15,7 @@ export class OwnerDTO {
   @IsNotEmpty()
   phone!: string;
 
-  profile_image!: string; 
+  profile_image!: string;
 
   role!: string;
 }
