@@ -7,7 +7,8 @@ import { OwnerAuthModule } from './owner/auth/owner.auth.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [ ConfigModule.forRoot({
+  imports: [
+    ConfigModule.forRoot({
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
@@ -15,11 +16,14 @@ import { ConfigModule } from '@nestjs/config';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'root',
+      password: process.env.DB_PASSWORD,
       database: 'ToolSharingDB',
       autoLoadEntities: true,
       synchronize: true,
-    }),OwnerModule, OwnerAuthModule,],
+    }),
+    OwnerModule,
+    OwnerAuthModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
