@@ -28,4 +28,6 @@ export class OwnerController {
   getAllOwner() {
     return this.ownerService.getAllOwner();
   }
+
+  
 }
