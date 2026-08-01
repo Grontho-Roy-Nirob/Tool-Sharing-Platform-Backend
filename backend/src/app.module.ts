@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OwnerModule } from './owner/owner.module';
 import { OwnerAuthModule } from './owner/auth/owner.auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { RenterModule } from './renter/renter.module';
+import { RenterAuthModule } from './renter/auth/renter.auth.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { ConfigModule } from '@nestjs/config';
     }),
     OwnerModule,
     OwnerAuthModule,
+    RenterModule,
+    RenterAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
