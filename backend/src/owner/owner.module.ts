@@ -31,13 +31,7 @@ import { CategoryEntity } from './entity/category.entity';
     }),
   ],
   controllers: [OwnerController],
-  providers: [
-    OwnerService,
-    OwnerAuthGuard,
-  ],
-  exports: [
-    OwnerService,
-    OwnerAuthGuard,
-  ],
+  providers: [OwnerService, OwnerAuthGuard],
+  exports: [OwnerService, OwnerAuthGuard],
 })
 export class OwnerModule {}

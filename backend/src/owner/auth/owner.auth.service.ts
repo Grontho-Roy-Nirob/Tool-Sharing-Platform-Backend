@@ -23,10 +23,7 @@ export class OwnerAuthService {
       throw new UnauthorizedException();
     }
 
-    const isMatch = await bcrypt.compare(
-      logindata.password,
-      user.password,
-    );
+    const isMatch = await bcrypt.compare(logindata.password, user.password);
 
     if (!isMatch) {
       throw new UnauthorizedException();
