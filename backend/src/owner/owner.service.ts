@@ -3,11 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OwnerEntity } from './entity/owner.entity';
 import { loginDTO, OwnerDTO } from './dto/owner.dto';
+import { CategoryEntity } from './entity/category.entity';
 
 @Injectable()
 export class OwnerService {
   constructor(
     @InjectRepository(OwnerEntity) private ownerRepo: Repository<OwnerEntity>,
+    @InjectRepository(CategoryEntity) private categoryRepo: Repository<CategoryEntity>,
   ) {}
 
   getAllOwner(): Promise<OwnerEntity[]> {
@@ -21,4 +23,6 @@ export class OwnerService {
   async findOne(logindata: loginDTO): Promise<OwnerEntity | null> {
     return await this.ownerRepo.findOneBy({ email: logindata.email });
   }
+
+  
 }

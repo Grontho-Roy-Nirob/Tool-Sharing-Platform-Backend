@@ -15,7 +15,7 @@ import { ConfigModule } from '@nestjs/config';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'root',
+      password: process.env.DB_PASSWORD,
       database: 'ToolSharingDB',
       autoLoadEntities: true,
       synchronize: true,
