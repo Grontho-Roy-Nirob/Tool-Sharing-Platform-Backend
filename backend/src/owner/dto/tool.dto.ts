@@ -1,9 +1,4 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsPositive,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsPositive, IsString } from 'class-validator';
 
 export class ToolDTO {
   @IsNotEmpty()
@@ -22,8 +17,6 @@ export class ToolDTO {
   @IsString()
   condition!: string;
 
-  @IsNumber()
-  @IsPositive()
   rental_price_per_day!: number;
 
   @IsNotEmpty()
@@ -33,5 +26,7 @@ export class ToolDTO {
   @IsString()
   status!: string;
 
-  image!: string;
+  category_id!: number;
+
+  tool_image!: string;
 }
