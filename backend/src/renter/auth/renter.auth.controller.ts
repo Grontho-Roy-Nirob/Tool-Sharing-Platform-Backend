@@ -4,9 +4,14 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  UploadedFile,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 import { CreateRenterDto, LoginDto } from '../dto/renter.dto';
 import { RenterAuthService } from './renter.auth.service';
@@ -17,6 +22,29 @@ export class RenterAuthController {
 
   // POST: /renter-auth/register
   @Post('register')
+  @UseInterceptors(
+    FileInterceptor('profileImage', {
+      storage: diskStorage({
+        destination: './uploads/renter_profile',
+        filename: (req, file, cb) => {
+          cb(null, `${Date.now()}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/i)) {
+          cb(null, true);
+        } else {
+          cb(
+            new Error('Only jpg, jpeg, png and webp files are allowed.'),
+            false,
+          );
+        }
+      },
+      limits: {
+        fileSize: 2 * 1024 * 1024,
+      },
+    }),
+  )
   @UsePipes(
     new ValidationPipe({
       whitelist: true,
@@ -24,8 +52,15 @@ export class RenterAuthController {
       transform: true,
     }),
   )
-  async register(@Body() createRenterDto: CreateRenterDto) {
-    return await this.renterAuthService.register(createRenterDto);
+  async register(
+    @Body() createRenterDto: CreateRenterDto,
+    @UploadedFile() profileImage?: Express.Multer.File,
+  ) {
+    if (profileImage) {
+      createRenterDto.profileImage = profileImage.filename;
+    }
+
+    return this.renterAuthService.register(createRenterDto);
   }
 
   // POST: /renter-auth/login
@@ -39,6 +74,6 @@ export class RenterAuthController {
     }),
   )
   async login(@Body() loginDto: LoginDto) {
-    return await this.renterAuthService.login(loginDto);
+    return this.renterAuthService.login(loginDto);
   }
 }
