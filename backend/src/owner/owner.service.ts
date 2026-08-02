@@ -13,7 +13,7 @@ export class OwnerService {
   getAllOwner(): Promise<OwnerEntity[]> {
     return this.ownerRepo.find();
   }
-  
+
   async createOwner(data: OwnerDTO): Promise<OwnerEntity> {
     return await this.ownerRepo.save(data);
   }

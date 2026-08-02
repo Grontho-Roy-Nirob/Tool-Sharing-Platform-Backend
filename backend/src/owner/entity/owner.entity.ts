@@ -1,4 +1,10 @@
-import { Column, Entity,PrimaryGeneratedColumn,CreateDateColumn,UpdateDateColumn} from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('owner')
 export class OwnerEntity {
@@ -20,13 +26,12 @@ export class OwnerEntity {
   @Column()
   profile_image!: string;
 
-  @Column({type: 'character varying', default: 'owner',
-  })
+  @Column({ type: 'character varying', default: 'owner' })
   role!: string;
 
-  @CreateDateColumn({name: 'created_at'})
+  @CreateDateColumn({ name: 'created_at' })
   created_at!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', })
+  @UpdateDateColumn({ name: 'updated_at' })
   updated_at!: Date;
 }
