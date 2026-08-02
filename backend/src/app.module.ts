@@ -7,6 +7,7 @@ import { OwnerAuthModule } from './owner/auth/owner.auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { RenterModule } from './renter/renter.module';
 import { RenterAuthModule } from './renter/auth/renter.auth.module';
+import { ReviewModule } from './renter/review.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RenterAuthModule } from './renter/auth/renter.auth.module';
     OwnerAuthModule,
     RenterModule,
     RenterAuthModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],
