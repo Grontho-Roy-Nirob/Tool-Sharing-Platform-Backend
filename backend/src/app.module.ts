@@ -7,6 +7,9 @@ import { OwnerAuthModule } from './owner/auth/owner.auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { RenterModule } from './renter/renter.module';
 import { RenterAuthModule } from './renter/auth/renter.auth.module';
+import { ModeratorModule } from './moderator/moderator.module';
+import { MailModule } from './modules/mail/mail.module';
+import { ModeratorAuthModule } from './moderator/auth/moderator.auth.module';
 
 @Module({
   imports: [
@@ -27,6 +30,10 @@ import { RenterAuthModule } from './renter/auth/renter.auth.module';
     OwnerAuthModule,
     RenterModule,
     RenterAuthModule,
+    ModeratorModule,
+    MailModule,
+    ModeratorAuthModule
+  
   ],
   controllers: [AppController],
   providers: [AppService],
