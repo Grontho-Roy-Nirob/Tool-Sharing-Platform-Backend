@@ -7,6 +7,9 @@ import { OwnerAuthModule } from './owner/auth/owner.auth.module';
 import { AdminModule } from './admin/admin.module';
 import { AdminAuthModule } from './admin/auth/admin.auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { RenterModule } from './renter/renter.module';
+import { RenterAuthModule } from './renter/auth/renter.auth.module';
+import { ReviewModule } from './renter/review.module';
 
 @Module({
   imports: [
@@ -18,7 +21,7 @@ import { ConfigModule } from '@nestjs/config';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'root',
+      password: process.env.DB_PASSWORD,
       database: 'ToolSharingDB',
       autoLoadEntities: true,
       synchronize: true,
@@ -27,6 +30,9 @@ import { ConfigModule } from '@nestjs/config';
     OwnerAuthModule,
     AdminModule,
     AdminAuthModule,
+    RenterModule,
+    RenterAuthModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -20,12 +20,27 @@ import { OwnerController } from './owner.controller';
 import { OwnerService } from './owner.service';
 import { OwnerEntity } from './entity/owner.entity';
 import { OwnerAuthGuard } from './auth/owner.auth.guard';
+import { ToolEntity } from './entity/tool.entity';
+import { CategoryEntity } from './entity/category.entity';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([OwnerEntity]),
+    TypeOrmModule.forFeature([OwnerEntity, ToolEntity, CategoryEntity]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
+    }),
+    MailerModule.forRoot({
+      transport: {
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        ignoreTLS: true,
+        auth: {
+          user: 'roygrontho@gmail.com',
+          pass: 'qitn wfra oifx fjey',
+        },
+      },
     }),
   ],
   controllers: [OwnerController],
