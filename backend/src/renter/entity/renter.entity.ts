@@ -11,6 +11,8 @@ import {
 export enum RenterRole {
   RENTER = 0,
 }
+import { OneToMany } from 'typeorm';
+import { Review } from './review.entity';
 
 @Entity('renter')
 export class Renter {
@@ -65,4 +67,12 @@ export class Renter {
     type: 'timestamptz',
   })
   updatedAt: Date;
+
+  // @ManyToOne(() => Renter, (renter) => renter.reviews)
+  // @JoinColumn({
+  //   name: 'renter_id',
+  // })
+  @OneToMany(() => Review, (review) => review.renter)
+  reviews: Review[];
+  renter: Renter;
 }
