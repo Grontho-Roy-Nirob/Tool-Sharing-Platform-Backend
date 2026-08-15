@@ -13,6 +13,7 @@ export enum RenterRole {
 }
 import { OneToMany } from 'typeorm';
 import { Review } from './review.entity';
+import { OrderList } from './orderlist.entity';
 
 @Entity('renter')
 export class Renter {
@@ -72,6 +73,9 @@ export class Renter {
   // @JoinColumn({
   //   name: 'renter_id',
   // })
+  @OneToMany(() => OrderList, (order) => order.renter)
+  orders!: OrderList[];
+
   @OneToMany(() => Review, (review) => review.renter)
   reviews: Review[];
   renter: Renter;

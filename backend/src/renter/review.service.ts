@@ -3,11 +3,14 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Review } from './entity/review.entity';
 import { Renter } from '../renter/entity/renter.entity';
+import { ToolEntity } from '../owner/entity/tool.entity';
+
 import { CreateReviewDto, UpdateReviewDto } from './dto/review.dto';
 
 @Injectable()
@@ -18,6 +21,9 @@ export class ReviewService {
 
     @InjectRepository(Renter)
     private readonly renterRepository: Repository<Renter>,
+
+    @InjectRepository(ToolEntity)
+    private readonly toolRepository: Repository<ToolEntity>,
   ) {}
 
   // Create Review
@@ -25,6 +31,7 @@ export class ReviewService {
     renterId: number,
     createReviewDto: CreateReviewDto,
   ): Promise<Review> {
+    // Find renter
     const renter = await this.renterRepository.findOne({
       where: { renterId },
     });
@@ -33,9 +40,22 @@ export class ReviewService {
       throw new NotFoundException('Renter not found.');
     }
 
+    // Find tool
+    const tool = await this.toolRepository.findOne({
+      where: {
+        id: createReviewDto.toolId,
+      },
+    });
+
+    if (!tool) {
+      throw new NotFoundException('Tool not found.');
+    }
+
+    // Create review
     const review = this.reviewRepository.create({
-      orderId: createReviewDto.orderId,
+      order_id: createReviewDto.orderId,
       renter,
+      tool,
       rating: createReviewDto.rating,
       review: createReviewDto.review,
     });
@@ -47,7 +67,11 @@ export class ReviewService {
   async findOne(id: number): Promise<Review> {
     const review = await this.reviewRepository.findOne({
       where: {
-        reviewId: id,
+        review_id: id,
+      },
+      relations: {
+        renter: true,
+        tool: true,
       },
     });
 
@@ -66,7 +90,11 @@ export class ReviewService {
   ): Promise<Review> {
     const review = await this.reviewRepository.findOne({
       where: {
-        reviewId,
+        review_id: reviewId,
+      },
+      relations: {
+        renter: true,
+        tool: true,
       },
     });
 
@@ -90,7 +118,10 @@ export class ReviewService {
   ): Promise<{ message: string }> {
     const review = await this.reviewRepository.findOne({
       where: {
-        reviewId,
+        review_id: reviewId,
+      },
+      relations: {
+        renter: true,
       },
     });
 

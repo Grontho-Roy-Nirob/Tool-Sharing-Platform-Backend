@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import { RenterModule } from './renter/renter.module';
 import { RenterAuthModule } from './renter/auth/renter.auth.module';
 import { ReviewModule } from './renter/review.module';
+import { PaymentModule } from './renter/payment.modulle';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ReviewModule } from './renter/review.module';
     RenterModule,
     RenterAuthModule,
     ReviewModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

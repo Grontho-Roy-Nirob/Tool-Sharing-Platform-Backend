@@ -22,11 +22,18 @@ import { OwnerEntity } from './entity/owner.entity';
 import { OwnerAuthGuard } from './auth/owner.auth.guard';
 import { ToolEntity } from './entity/tool.entity';
 import { CategoryEntity } from './entity/category.entity';
+import { OrderList } from '../renter/entity/orderlist.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([OwnerEntity, ToolEntity, CategoryEntity]),
+    TypeOrmModule.forFeature([
+      OwnerEntity,
+      ToolEntity,
+      CategoryEntity,
+      OrderList,
+    ]),
+
     JwtModule.register({
       secret: process.env.JWT_SECRET,
     }),

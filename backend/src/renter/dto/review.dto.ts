@@ -15,7 +15,7 @@ export class CreateReviewDto {
 
   @IsInt()
   @IsNotEmpty()
-  ownerId: number;
+  toolId: number;
 
   @IsInt()
   @Min(1)
