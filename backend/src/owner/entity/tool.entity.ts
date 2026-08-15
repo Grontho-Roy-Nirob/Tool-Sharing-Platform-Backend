@@ -2,13 +2,16 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 import { OwnerEntity } from 'src/owner/entity/owner.entity';
 import { CategoryEntity } from './category.entity';
+import { OrderList } from 'src/renter/entity/orderlist.entity';
 
 @Entity('tool')
 export class ToolEntity {
@@ -55,8 +58,23 @@ export class ToolEntity {
   tool_image!: string;
 
   // Relationship with Category
-  @ManyToOne(() => CategoryEntity, (category) => category.tools)
+
+  // @ManyToOne(() => CategoryEntity, (category) => category.tools)
+  // category!: CategoryEntity;
+
+  //change mahib made
+  @Column({ name: 'category_id' })
+  category_id!: number;
+
+  @ManyToOne(() => CategoryEntity, (category) => category.tools, {
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'category_id' })
   category!: CategoryEntity;
+
+  @OneToMany(() => OrderList, (order) => order.tool)
+  orders!: OrderList[];
 
   // Relationship with Owner
   @ManyToOne(() => OwnerEntity, (owner) => owner.tools)

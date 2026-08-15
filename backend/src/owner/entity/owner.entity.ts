@@ -47,6 +47,6 @@ export class OwnerEntity {
   })
   updated_at!: Date;
 
-  @OneToMany(() => ToolEntity, (tool) => tool.owner, {cascade: true,})
+  @OneToMany(() => ToolEntity, (tool) => tool.owner, { cascade: true })
   tools: ToolEntity[] | undefined;
 }
