@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { OrderList, OrderStatus } from './entity/orderlist.entity';
 
@@ -45,10 +45,10 @@ export class OrderListService {
       throw new BadRequestException('Order data is required');
     }
 
-    const { tool_id, start_date, end_date, message } = dto;
+    const { tool_ids, start_date, end_date, message } = dto;
 
-    if (tool_id === undefined || tool_id === null) {
-      throw new BadRequestException('tool_id is required');
+    if (!tool_ids || !Array.isArray(tool_ids) || tool_ids.length === 0) {
+      throw new BadRequestException('At least one tool_id is required');
     }
 
     if (!start_date) {
@@ -57,6 +57,16 @@ export class OrderListService {
 
     if (!end_date) {
       throw new BadRequestException('end_date is required');
+    }
+
+    // ------------------------------------------
+    // Remove duplicate tool IDs
+    // ------------------------------------------
+
+    const uniqueToolIds = [...new Set(tool_ids.map((id) => Number(id)))];
+
+    if (uniqueToolIds.some((id) => isNaN(id))) {
+      throw new BadRequestException('All tool_ids must be valid numbers');
     }
 
     // ------------------------------------------
@@ -74,25 +84,43 @@ export class OrderListService {
     }
 
     // ------------------------------------------
-    // Find tool
+    // Find all tools
     // ------------------------------------------
 
-    const tool = await this.toolRepository.findOne({
+    const tools = await this.toolRepository.find({
       where: {
-        id: Number(tool_id),
+        id: In(uniqueToolIds),
       },
     });
 
-    if (!tool) {
-      throw new NotFoundException('Tool not found');
+    // ------------------------------------------
+    // Check all tools exist
+    // ------------------------------------------
+
+    if (tools.length !== uniqueToolIds.length) {
+      const foundToolIds = tools.map((tool) => tool.id);
+
+      const missingToolIds = uniqueToolIds.filter(
+        (id) => !foundToolIds.includes(id),
+      );
+
+      throw new NotFoundException(
+        `Tool(s) not found: ${missingToolIds.join(', ')}`,
+      );
     }
 
     // ------------------------------------------
     // Check tool availability
     // ------------------------------------------
 
-    if (!tool.is_available) {
-      throw new ConflictException('Tool is currently unavailable');
+    const unavailableTools = tools.filter((tool) => !tool.is_available);
+
+    if (unavailableTools.length > 0) {
+      const unavailableToolIds = unavailableTools.map((tool) => tool.id);
+
+      throw new ConflictException(
+        `Tool(s) currently unavailable: ${unavailableToolIds.join(', ')}`,
+      );
     }
 
     // ------------------------------------------
@@ -129,20 +157,22 @@ export class OrderListService {
     );
 
     // ------------------------------------------
-    // Get tool price
+    // Calculate total price
     // ------------------------------------------
 
-    const pricePerDay = Number(tool.rental_price_per_day);
+    let totalAmount = 0;
 
-    if (isNaN(pricePerDay)) {
-      throw new BadRequestException('Invalid tool rental price');
+    for (const tool of tools) {
+      const pricePerDay = Number(tool.rental_price_per_day);
+
+      if (isNaN(pricePerDay)) {
+        throw new BadRequestException(
+          `Invalid rental price for tool ID ${tool.id}`,
+        );
+      }
+
+      totalAmount += pricePerDay * durationDays;
     }
-
-    // ------------------------------------------
-    // Calculate total
-    // ------------------------------------------
-
-    const totalAmount = pricePerDay * durationDays;
 
     // ------------------------------------------
     // Create order
@@ -150,14 +180,14 @@ export class OrderListService {
 
     const order = this.orderRepository.create({
       renter_id: renterId,
-      tool_id: tool.id,
+
+      tools,
 
       start_date: startDate,
       end_date: endDate,
 
       duration_days: durationDays,
 
-      rental_price_per_day: pricePerDay,
       total_amount: totalAmount,
 
       status: OrderStatus.PENDING,
@@ -165,22 +195,38 @@ export class OrderListService {
       message: message ?? null,
     });
 
+    // ------------------------------------------
+    // Save order
+    // ------------------------------------------
+
     const savedOrder = await this.orderRepository.save(order);
 
     console.log('Created Order:', savedOrder);
+    console.log(
+      'Tools:',
+      tools.map((tool) => tool.id),
+    );
+    console.log('Total Amount:', totalAmount);
     console.log('================================');
 
     return savedOrder;
   }
+
+  // ==========================================
+  // GET MY ORDERS
+  // ==========================================
+
   async getMyOrders(renterId: number) {
     const orders = await this.orderRepository.find({
       where: {
         renter_id: renterId,
       },
+
       relations: {
-        tool: true,
+        tools: true,
         renter: true,
       },
+
       order: {
         created_at: 'DESC',
       },

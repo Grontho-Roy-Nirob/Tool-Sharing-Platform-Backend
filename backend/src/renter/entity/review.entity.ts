@@ -1,58 +1,49 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
-  JoinColumn,
   CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-import { Renter } from './renter.entity';
+import { Renter } from '../entity/renter.entity';
+import { ToolEntity } from '../../owner/entity/tool.entity';
 
 @Entity('review')
 export class Review {
-  @PrimaryGeneratedColumn({
-    name: 'review_id',
-  })
-  reviewId: number;
+  @PrimaryGeneratedColumn()
+  review_id!: number;
 
-  // Will become a relation to OrderEntity later
-  @Column({
-    name: 'order_id',
-    type: 'int',
-  })
-  orderId: number;
+  @Column({ type: 'int' })
+  order_id!: number;
 
-  @ManyToOne(() => Renter, (renter) => renter.reviews, {
-    eager: true,
+  @Column({ type: 'int' })
+  rating!: number;
+
+  @Column({ type: 'text', nullable: true })
+  review!: string;
+
+  @CreateDateColumn({ name: 'created_at' })
+  created_at!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updated_at!: Date;
+
+  // Relationship with Tool
+  @ManyToOne(() => ToolEntity, (tool) => tool.reviews, {
+    nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({
-    name: 'renter_id',
-  })
-  renter: Renter;
+  @JoinColumn({ name: 'tool_id' })
+  tool!: ToolEntity;
 
-  @Column({
-    type: 'int',
+  // Relationship with Renter
+  @ManyToOne(() => Renter, (renter) => renter.reviews, {
+    nullable: false,
+    onDelete: 'CASCADE',
   })
-  rating: number;
-
-  @Column({
-    type: 'text',
-    nullable: true,
-  })
-  review?: string;
-
-  @CreateDateColumn({
-    name: 'created_at',
-    type: 'timestamptz',
-  })
-  createdAt: Date;
-
-  @UpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamptz',
-  })
-  updatedAt: Date;
+  @JoinColumn({ name: 'renter_id' })
+  renter!: Renter;
 }

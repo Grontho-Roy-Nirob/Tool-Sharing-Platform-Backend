@@ -1,14 +1,19 @@
 import {
+  IsArray,
   IsDateString,
   IsInt,
   IsOptional,
   IsString,
   MaxLength,
+  ArrayMinSize,
 } from 'class-validator';
 
 export class CreateOrderListDto {
-  @IsInt()
-  tool_id!: number;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsInt({ each: true })
+  tool_ids!: number[];
+
   @IsDateString()
   start_date!: string;
   @IsDateString()

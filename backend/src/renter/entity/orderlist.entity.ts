@@ -3,6 +3,8 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -44,23 +46,24 @@ export class OrderList {
   renter!: Renter;
 
   // ==========================================
-  // TOOL
+  // TOOLS - MANY TO MANY
   // ==========================================
 
-  @Column({
-    name: 'tool_id',
-  })
-  tool_id!: number;
+  @ManyToMany(() => ToolEntity, (tool) => tool.orders)
+  @JoinTable({
+    name: 'order_tools',
 
-  @ManyToOne(() => ToolEntity, (tool) => tool.orders, {
-    nullable: false,
-    onDelete: 'RESTRICT',
+    joinColumn: {
+      name: 'order_id',
+      referencedColumnName: 'id',
+    },
+
+    inverseJoinColumn: {
+      name: 'tool_id',
+      referencedColumnName: 'id',
+    },
   })
-  @JoinColumn({
-    name: 'tool_id',
-    referencedColumnName: 'id',
-  })
-  tool!: ToolEntity;
+  tools!: ToolEntity[];
 
   // ==========================================
   // RENTAL PERIOD
@@ -87,14 +90,6 @@ export class OrderList {
   // ==========================================
   // PRICE
   // ==========================================
-
-  @Column({
-    type: 'decimal',
-    precision: 10,
-    scale: 2,
-    name: 'rental_price_per_day',
-  })
-  rental_price_per_day!: number;
 
   @Column({
     type: 'decimal',

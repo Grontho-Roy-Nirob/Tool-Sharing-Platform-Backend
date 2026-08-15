@@ -6,12 +6,16 @@ import {
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { OwnerEntity } from './entity/owner.entity';
 import { loginDTO, OwnerDTO } from './dto/owner.dto';
+
 import { CategoryEntity } from './entity/category.entity';
 import { ToolEntity } from './entity/tool.entity';
 import { ToolDTO } from './dto/tool.dto';
+
 import { OrderList, OrderStatus } from '../renter/entity/orderlist.entity';
+
 import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
@@ -33,7 +37,7 @@ export class OwnerService {
   ) {}
 
   // ==========================================
-  // EXISTING OWNER METHODS
+  // OWNER METHODS
   // ==========================================
 
   getAllOwner(): Promise<OwnerEntity[]> {
@@ -96,7 +100,12 @@ export class OwnerService {
   }
 
   async updateTool(id: number, tooldata: ToolDTO): Promise<ToolEntity> {
-    const tool = await this.toolRepo.findOneBy({ id });
+    const tool = await this.toolRepo.findOne({
+      where: { id },
+      relations: {
+        category: true,
+      },
+    });
 
     if (!tool) {
       throw new NotFoundException('Tool not found');
@@ -140,8 +149,15 @@ export class OwnerService {
   // ORDER MANAGEMENT
   // ==========================================
 
+  // ==========================================
   // GET OWNER'S ORDERS
+  // ==========================================
+
   async getOwnerOrders(ownerId: number) {
+    // ------------------------------------------
+    // Check owner
+    // ------------------------------------------
+
     const owner = await this.ownerRepo.findOneBy({
       id: ownerId,
     });
@@ -150,24 +166,22 @@ export class OwnerService {
       throw new NotFoundException('Owner not found');
     }
 
-    return this.orderRepo.find({
-      relations: {
-        renter: true,
-        tool: true,
-      },
+    // ------------------------------------------
+    // Get orders containing owner's tools
+    // ------------------------------------------
 
-      where: {
-        tool: {
-          owner: {
-            id: ownerId,
-          },
-        },
-      },
+    const orders = await this.orderRepo
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.renter', 'renter')
+      .leftJoinAndSelect('order.tools', 'tool')
+      .leftJoinAndSelect('tool.owner', 'owner')
+      .where('owner.id = :ownerId', {
+        ownerId,
+      })
+      .orderBy('order.created_at', 'DESC')
+      .getMany();
 
-      order: {
-        created_at: 'DESC',
-      },
-    });
+    return orders;
   }
 
   // ==========================================
@@ -175,27 +189,40 @@ export class OwnerService {
   // ==========================================
 
   async approveOrder(orderId: number) {
-    const order = await this.orderRepo.findOne({
-      where: {
-        id: orderId,
-      },
-
-      relations: {
-        tool: {
-          owner: true,
-        },
-      },
-    });
+    const order = await this.orderRepo
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.tools', 'tool')
+      .leftJoinAndSelect('tool.owner', 'owner')
+      .where('order.id = :orderId', {
+        orderId,
+      })
+      .getOne();
 
     if (!order) {
       throw new NotFoundException('Order not found');
     }
+
+    // ------------------------------------------
+    // Check status
+    // ------------------------------------------
 
     if (order.status !== OrderStatus.PENDING) {
       throw new ConflictException(
         `Order cannot be approved because its current status is ${order.status}`,
       );
     }
+
+    // ------------------------------------------
+    // Make sure order has tools
+    // ------------------------------------------
+
+    if (!order.tools || order.tools.length === 0) {
+      throw new ConflictException('Cannot approve an order without tools');
+    }
+
+    // ------------------------------------------
+    // Approve order
+    // ------------------------------------------
 
     order.status = OrderStatus.APPROVED;
 
@@ -207,27 +234,40 @@ export class OwnerService {
   // ==========================================
 
   async rejectOrder(orderId: number) {
-    const order = await this.orderRepo.findOne({
-      where: {
-        id: orderId,
-      },
-
-      relations: {
-        tool: {
-          owner: true,
-        },
-      },
-    });
+    const order = await this.orderRepo
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.tools', 'tool')
+      .leftJoinAndSelect('tool.owner', 'owner')
+      .where('order.id = :orderId', {
+        orderId,
+      })
+      .getOne();
 
     if (!order) {
       throw new NotFoundException('Order not found');
     }
+
+    // ------------------------------------------
+    // Check status
+    // ------------------------------------------
 
     if (order.status !== OrderStatus.PENDING) {
       throw new ConflictException(
         `Order cannot be rejected because its current status is ${order.status}`,
       );
     }
+
+    // ------------------------------------------
+    // Make sure order has tools
+    // ------------------------------------------
+
+    if (!order.tools || order.tools.length === 0) {
+      throw new ConflictException('Cannot reject an order without tools');
+    }
+
+    // ------------------------------------------
+    // Reject order
+    // ------------------------------------------
 
     order.status = OrderStatus.REJECTED;
 

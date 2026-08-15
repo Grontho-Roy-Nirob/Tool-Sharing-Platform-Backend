@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -12,6 +13,7 @@ import {
 import { OwnerEntity } from 'src/owner/entity/owner.entity';
 import { CategoryEntity } from './category.entity';
 import { OrderList } from 'src/renter/entity/orderlist.entity';
+import { Review } from 'src/renter/entity/review.entity';
 
 @Entity('tool')
 export class ToolEntity {
@@ -73,10 +75,13 @@ export class ToolEntity {
   @JoinColumn({ name: 'category_id' })
   category!: CategoryEntity;
 
-  @OneToMany(() => OrderList, (order) => order.tool)
+  @ManyToMany(() => OrderList, (order) => order.tools)
   orders!: OrderList[];
 
   // Relationship with Owner
   @ManyToOne(() => OwnerEntity, (owner) => owner.tools)
   owner!: OwnerEntity;
+  //review
+  @OneToMany(() => Review, (review) => review.tool)
+  reviews!: Review[];
 }
