@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsNumberString, IsString, Matches, MinLength } from 'class-validator';
 
 export class OwnerDTO {
   @IsNotEmpty()
@@ -14,6 +14,12 @@ export class OwnerDTO {
 
   @IsNotEmpty()
   phone!: string;
+
+  @IsNumberString()
+  @Matches(/^\d{10}$/, {
+    message: 'NID number must be exactly 10 digits',
+  })
+  nidNumber!: string;
 
   profile_image!: string;
 

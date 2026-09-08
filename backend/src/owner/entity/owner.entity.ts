@@ -37,6 +37,12 @@ export class OwnerEntity {
   })
   role!: string;
 
+  @Column({
+    name: 'nid_number',
+    type: 'bigint',
+  })
+  nidNumber!: string;
+
   @CreateDateColumn({
     name: 'created_at',
   })
