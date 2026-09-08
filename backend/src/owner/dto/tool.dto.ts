@@ -23,9 +23,6 @@ export class ToolDTO {
   @IsString()
   location!: string;
 
-  @IsString()
-  status!: string;
-
   category_id!: number;
 
   tool_image!: string;
