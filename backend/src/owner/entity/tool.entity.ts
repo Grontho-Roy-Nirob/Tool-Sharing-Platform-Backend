@@ -15,6 +15,12 @@ import { CategoryEntity } from './category.entity';
 import { OrderList } from 'src/renter/entity/orderlist.entity';
 import { Review } from 'src/renter/entity/review.entity';
 
+export enum ToolStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
+
 @Entity('tool')
 export class ToolEntity {
   @PrimaryGeneratedColumn()
@@ -47,14 +53,12 @@ export class ToolEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updated_at!: Date;
 
-  @Column({ type: 'character varying', default: 'pending' })
-  status!: string;
-
-  @Column({ nullable: true })
-  reviewed_by!: string;
-
-  @Column({ type: 'text', nullable: true })
-  rejection_reason!: string;
+    @Column({
+    type: 'enum',
+    enum: ToolStatus,
+    default: ToolStatus.PENDING,
+  })
+  status!: ToolStatus;
 
   @Column()
   tool_image!: string;
