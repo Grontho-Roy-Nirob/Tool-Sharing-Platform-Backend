@@ -75,6 +75,28 @@ export class OwnerService {
     return this.toolRepo.find();
   }
 
+  async getToolsByOwner(ownerid: number): Promise<ToolEntity[]> {
+    const owner = await this.ownerRepo.findOneBy({
+      id: ownerid,
+    });
+
+    if (!owner) {
+      throw new NotFoundException('Owner not found');
+    }
+
+    return this.toolRepo.find({
+      where: {
+        owner: {
+          id: ownerid,
+        },
+      },
+      relations: {
+        category: true,
+        owner: true,
+      },
+    });
+  }
+
   async createTool(ownerid: number, tooldata: ToolDTO): Promise<ToolEntity> {
     const owner = await this.ownerRepo.findOneBy({
       id: ownerid,
