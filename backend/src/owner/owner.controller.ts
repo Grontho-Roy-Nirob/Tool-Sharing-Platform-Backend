@@ -46,6 +46,13 @@ export class OwnerController {
     return this.ownerService.getAllTools();
   }
 
+  // URL: http://localhost:7000/owner/tools/1
+  @UseGuards(OwnerAuthGuard)
+  @Get('tools/:ownerid')
+  getToolsByOwner(@Param('ownerid', ParseIntPipe) ownerid: number) {
+    return this.ownerService.getToolsByOwner(ownerid);
+  }
+
   // URL: http://localhost:7000/owner/createtool/1
   @Post('createtool/:ownerid')
   @UsePipes(new ValidationPipe())
@@ -65,6 +72,7 @@ export class OwnerController {
       }),
     }),
   )
+
   createToolByOwner(
     @Param('ownerid', ParseIntPipe) ownerid: number,
     @Body() tooldata: ToolDTO,
