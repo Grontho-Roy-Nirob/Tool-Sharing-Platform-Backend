@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,6 +18,7 @@ import { ToolDTO } from './dto/tool.dto';
 import { OrderList, OrderStatus } from '../renter/entity/orderlist.entity';
 
 import { MailerService } from '@nestjs-modules/mailer';
+import { UpdateOwnerDTO } from './dto/update-owner.dto';
 
 @Injectable()
 export class OwnerService {
@@ -156,8 +158,18 @@ export class OwnerService {
 
   async updateOwner(
     id: number,
-    ownerData: OwnerDTO,
+    ownerData: UpdateOwnerDTO,
   ): Promise<OwnerEntity | null> {
+    const owner = await this.ownerRepo.findOneBy({ id });
+
+    if (!owner) {
+      throw new NotFoundException('Owner not found');
+    }
+
+    if (ownerData.password) {
+      ownerData.password = await bcrypt.hash(ownerData.password, 10);
+    }
+
     await this.ownerRepo.update(id, ownerData);
 
     return this.ownerRepo.findOneBy({ id });
