@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -16,6 +17,7 @@ import { AdminAuthGuard } from './auth/admin.auth.guard';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from 'src/owner/dto/create-category.dto';
 import { UpdateCategoryDto } from 'src/owner/dto/update-category.dto';
+import { UpdateToolStatusDto } from './dto/update-tool-status.dto';
 
 //import { CategoryEntity } from '../owner/entity/category.entity';
 @Controller('admin')
@@ -76,5 +78,18 @@ export class AdminController {
   @Delete('categories/:id')
   deleteCategory(@Param('id', ParseIntPipe) id: number) {
     return this.categoryService.remove(id);
+  }
+
+  // ==========================================
+  // TOOL MANAGEMENT
+  // ==========================================
+
+  @UseGuards(AdminAuthGuard)
+  @Patch('tools/:id/status')
+  updateToolStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateToolStatusDto,
+  ) {
+    return this.adminService.updateToolStatus(id, dto);
   }
 }
