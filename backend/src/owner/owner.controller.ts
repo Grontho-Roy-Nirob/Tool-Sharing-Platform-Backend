@@ -22,6 +22,7 @@ import { ToolDTO } from './dto/tool.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage, MulterError } from 'multer';
 import { OwnerDTO } from './dto/owner.dto';
+import { UpdateOwnerDTO } from './dto/update-owner.dto';
 
 @Controller('owner')
 export class OwnerController {
@@ -72,7 +73,6 @@ export class OwnerController {
       }),
     }),
   )
-
   createToolByOwner(
     @Param('ownerid', ParseIntPipe) ownerid: number,
     @Body() tooldata: ToolDTO,
@@ -123,9 +123,11 @@ export class OwnerController {
           cb(null, true);
         else cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
       },
+
       limits: {
         fileSize: 2 * 1024 * 1024,
       },
+
       storage: diskStorage({
         destination: './uploads/owner_profile',
         filename: (req, file, cb) => {
@@ -136,12 +138,13 @@ export class OwnerController {
   )
   updateOwner(
     @Param('id', ParseIntPipe) id: number,
-    @Body() ownerData: OwnerDTO,
+    @Body() ownerData: UpdateOwnerDTO,
     @UploadedFile() myfile: Express.Multer.File,
   ): object | null {
     if (myfile) {
       ownerData.profile_image = myfile.filename;
     }
+
     return this.ownerService.updateOwner(id, ownerData);
   }
 
