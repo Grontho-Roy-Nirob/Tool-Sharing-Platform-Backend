@@ -53,6 +53,8 @@ export class OwnerController {
   getToolsByOwner(@Param('ownerid', ParseIntPipe) ownerid: number) {
     return this.ownerService.getToolsByOwner(ownerid);
   }
+
+  // URL: http://localhost:7000/owner/deletetool/1
   @UseGuards(OwnerAuthGuard)
   @Delete('deletetool/:id')
   deleteTool(@Param('id', ParseIntPipe) id: number) {
