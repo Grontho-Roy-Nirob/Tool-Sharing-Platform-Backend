@@ -12,7 +12,7 @@ import { OwnerEntity } from './entity/owner.entity';
 import { loginDTO, OwnerDTO } from './dto/owner.dto';
 
 import { CategoryEntity } from './entity/category.entity';
-import { ToolEntity } from './entity/tool.entity';
+import { ToolEntity, ToolStatus } from './entity/tool.entity';
 import { ToolDTO } from './dto/tool.dto';
 
 import { OrderList, OrderStatus } from '../renter/entity/orderlist.entity';
