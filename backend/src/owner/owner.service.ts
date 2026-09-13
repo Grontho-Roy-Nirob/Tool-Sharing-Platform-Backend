@@ -68,6 +68,7 @@ export class OwnerService {
   async getCategoryName() {
     return this.categoryRepo.find({
       select: {
+        id: true,
         name: true,
       },
     });
@@ -306,5 +307,16 @@ export class OwnerService {
     order.status = OrderStatus.REJECTED;
 
     return this.orderRepo.save(order);
+  }
+  async deleteTool(toolId: number): Promise<void> {
+    const tool = await this.toolRepo.findOne({
+      where: { id: toolId },
+    });
+
+    if (!tool) {
+      throw new NotFoundException('Tool not found');
+    }
+
+    await this.toolRepo.delete(toolId);
   }
 }
