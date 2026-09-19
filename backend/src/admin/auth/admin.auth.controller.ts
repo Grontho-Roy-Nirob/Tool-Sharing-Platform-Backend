@@ -10,11 +10,6 @@ import { diskStorage } from 'multer';
 export class AdminAuthController {
   constructor(private readonly adminAuthService: AdminAuthService) {}
 
-  // ==========================================
-  // TEMPORARY: CREATE ADMIN
-  // TODO: REMOVE AFTER INITIAL ADMIN CREATION
-  // ==========================================
-
   // URL: http://localhost:7000/admin/auth/create
   @Post('create')
   @UseInterceptors(
@@ -37,10 +32,6 @@ export class AdminAuthController {
 
     return this.adminAuthService.createAdmin(createAdminDto);
   }
-
-  // ==========================================
-  // ADMIN LOGIN
-  // ==========================================
 
   // URL: http://localhost:7000/admin/auth/login
   @HttpCode(HttpStatus.OK)

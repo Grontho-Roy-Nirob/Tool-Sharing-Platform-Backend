@@ -27,9 +27,6 @@ export class AdminController {
     private readonly categoryService: CategoryService,
   ) {}
 
-  // ==========================================
-  // ADMIN
-  // ==========================================
 
   // GET /admin/listall
   @UseGuards(AdminAuthGuard)
@@ -38,10 +35,8 @@ export class AdminController {
     return this.adminService.getAllAdmin();
   }
 
-  // ==========================================
-  // CATEGORY
-  // ==========================================
 
+  // CATEGORY
   // URL:  http://localhost:7000/admin/categories
   @UseGuards(AdminAuthGuard)
   @Post('categories')
@@ -80,10 +75,8 @@ export class AdminController {
     return this.categoryService.remove(id);
   }
 
-  // ==========================================
-  // TOOL MANAGEMENT
-  // ==========================================
 
+  // TOOL MANAGEMENT
   @UseGuards(AdminAuthGuard)
   @Patch('tools/:id/status')
   updateToolStatus(

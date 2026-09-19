@@ -26,10 +26,6 @@ export class OrderList {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  // ==========================================
-  // RENTER
-  // ==========================================
-
   @Column({
     name: 'renter_id',
   })
@@ -44,10 +40,6 @@ export class OrderList {
     referencedColumnName: 'renterId',
   })
   renter!: Renter;
-
-  // ==========================================
-  // TOOLS - MANY TO MANY
-  // ==========================================
 
   @ManyToMany(() => ToolEntity, (tool) => tool.orders)
   @JoinTable({
@@ -64,10 +56,6 @@ export class OrderList {
     },
   })
   tools!: ToolEntity[];
-
-  // ==========================================
-  // RENTAL PERIOD
-  // ==========================================
 
   @Column({
     type: 'date',
@@ -87,10 +75,6 @@ export class OrderList {
   })
   duration_days!: number;
 
-  // ==========================================
-  // PRICE
-  // ==========================================
-
   @Column({
     type: 'decimal',
     precision: 12,
@@ -99,10 +83,6 @@ export class OrderList {
   })
   total_amount!: number;
 
-  // ==========================================
-  // ORDER STATUS
-  // ==========================================
-
   @Column({
     type: 'enum',
     enum: OrderStatus,
@@ -110,19 +90,11 @@ export class OrderList {
   })
   status!: OrderStatus;
 
-  // ==========================================
-  // RENTER MESSAGE
-  // ==========================================
-
   @Column({
     type: 'text',
     nullable: true,
   })
   message!: string | null;
-
-  // ==========================================
-  // TIMESTAMPS
-  // ==========================================
 
   @CreateDateColumn({
     name: 'created_at',

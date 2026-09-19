@@ -70,9 +70,6 @@ export class Renter {
   updatedAt: Date;
 
   // @ManyToOne(() => Renter, (renter) => renter.reviews)
-  // @JoinColumn({
-  //   name: 'renter_id',
-  // })
   @OneToMany(() => OrderList, (order) => order.renter)
   orders!: OrderList[];
 

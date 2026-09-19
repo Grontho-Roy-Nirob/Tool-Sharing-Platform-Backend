@@ -38,10 +38,8 @@ export class OwnerService {
     private readonly mailerService: MailerService,
   ) {}
 
-  // ==========================================
-  // OWNER METHODS
-  // ==========================================
 
+  // OWNER METHODS
   getAllOwner(): Promise<OwnerEntity[]> {
     return this.ownerRepo.find();
   }
@@ -180,14 +178,9 @@ export class OwnerService {
     await this.ownerRepo.delete(ownerid);
   }
 
-  // ==========================================
+
   // ORDER MANAGEMENT
-  // ==========================================
-
-  // ==========================================
   // GET OWNER'S ORDERS
-  // ==========================================
-
   async getOwnerOrders(ownerId: number) {
     // ------------------------------------------
     // Check owner
@@ -201,10 +194,8 @@ export class OwnerService {
       throw new NotFoundException('Owner not found');
     }
 
-    // ------------------------------------------
+  
     // Get orders containing owner's tools
-    // ------------------------------------------
-
     const orders = await this.orderRepo
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.renter', 'renter')
@@ -219,10 +210,8 @@ export class OwnerService {
     return orders;
   }
 
-  // ==========================================
-  // APPROVE ORDER
-  // ==========================================
 
+  // APPROVE ORDER
   async approveOrder(orderId: number) {
     const order = await this.orderRepo
       .createQueryBuilder('order')
@@ -237,37 +226,25 @@ export class OwnerService {
       throw new NotFoundException('Order not found');
     }
 
-    // ------------------------------------------
     // Check status
-    // ------------------------------------------
-
     if (order.status !== OrderStatus.PENDING) {
       throw new ConflictException(
         `Order cannot be approved because its current status is ${order.status}`,
       );
     }
 
-    // ------------------------------------------
     // Make sure order has tools
-    // ------------------------------------------
-
     if (!order.tools || order.tools.length === 0) {
       throw new ConflictException('Cannot approve an order without tools');
     }
 
-    // ------------------------------------------
     // Approve order
-    // ------------------------------------------
-
     order.status = OrderStatus.APPROVED;
-
     return this.orderRepo.save(order);
   }
 
-  // ==========================================
+ 
   // REJECT ORDER
-  // ==========================================
-
   async rejectOrder(orderId: number) {
     const order = await this.orderRepo
       .createQueryBuilder('order')
@@ -282,28 +259,22 @@ export class OwnerService {
       throw new NotFoundException('Order not found');
     }
 
-    // ------------------------------------------
-    // Check status
-    // ------------------------------------------
 
+    // Check status
     if (order.status !== OrderStatus.PENDING) {
       throw new ConflictException(
         `Order cannot be rejected because its current status is ${order.status}`,
       );
     }
 
-    // ------------------------------------------
-    // Make sure order has tools
-    // ------------------------------------------
 
+    // Make sure order has tools
     if (!order.tools || order.tools.length === 0) {
       throw new ConflictException('Cannot reject an order without tools');
     }
 
-    // ------------------------------------------
-    // Reject order
-    // ------------------------------------------
 
+    // Reject order
     order.status = OrderStatus.REJECTED;
 
     return this.orderRepo.save(order);

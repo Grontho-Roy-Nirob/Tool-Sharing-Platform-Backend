@@ -18,10 +18,8 @@ export class CategoryService {
     private readonly categoryRepository: Repository<CategoryEntity>,
   ) {}
 
-  // ==========================================
-  // CREATE
-  // ==========================================
 
+  // CREATE
   async create(createCategoryDto: CreateCategoryDto): Promise<CategoryEntity> {
     const { name } = createCategoryDto;
 
@@ -41,10 +39,8 @@ export class CategoryService {
     return this.categoryRepository.save(category);
   }
 
-  // ==========================================
-  // GET ALL
-  // ==========================================
 
+  // GET ALL
   async findAll(): Promise<CategoryEntity[]> {
     return this.categoryRepository.find({
       order: {
@@ -53,10 +49,8 @@ export class CategoryService {
     });
   }
 
-  // ==========================================
-  // GET ONE
-  // ==========================================
 
+  // GET ONE
   async findOne(id: number): Promise<CategoryEntity> {
     const category = await this.categoryRepository.findOne({
       where: { id },
@@ -69,10 +63,8 @@ export class CategoryService {
     return category;
   }
 
-  // ==========================================
-  // UPDATE
-  // ==========================================
 
+  // UPDATE
   async update(
     id: number,
     updateCategoryDto: UpdateCategoryDto,
@@ -95,10 +87,8 @@ export class CategoryService {
     return this.categoryRepository.save(category);
   }
 
-  // ==========================================
-  // DELETE
-  // ==========================================
 
+  // DELETE
   async remove(id: number) {
     const category = await this.categoryRepository.findOne({
       where: { id },

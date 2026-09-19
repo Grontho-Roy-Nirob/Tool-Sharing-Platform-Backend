@@ -88,7 +88,7 @@ import { ToolModule } from './owner/tool.module';
       envFilePath: '.env',
     }),
 
-    // Supabase PostgreSQL Database
+    // NeonDB PostgreSQL Database
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
 
