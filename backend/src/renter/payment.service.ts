@@ -24,7 +24,7 @@ export class PaymentService {
     @InjectRepository(OrderList)
     private readonly orderRepository: Repository<OrderList>,
   ) {
-    this.stripe = new Stripe(process.env.STRIPE_SECRIT_KEY);
+    this.stripe = new Stripe(process.env.STRIPE_SECRIT_KEY as string);
   }
 
   // ==========================================
@@ -92,16 +92,15 @@ export class PaymentService {
       throw new ConflictException('Invalid order amount');
     }
 
-    /*
-     * Stripe amounts are sent in the currency's
-     * smallest unit.
-     *
-     * For a 2-decimal currency:
-     *
-     * ৳4500.00 → 450000
-     */
+    // ==========================================
+    // STRIPE AMOUNT
+    // ==========================================
 
     const stripeAmount = Math.round(amount * 100);
+
+    if (stripeAmount <= 0) {
+      throw new ConflictException('Invalid Stripe amount');
+    }
 
     // ==========================================
     // TRANSACTION ID
@@ -119,6 +118,7 @@ export class PaymentService {
     if (!payment) {
       payment = this.paymentRepository.create({
         order_id: order.id,
+
         order,
 
         transaction_id: transactionId,
@@ -211,5 +211,305 @@ export class PaymentService {
 
       checkout_url: session.url,
     };
+  }
+
+  // ==========================================
+  // STRIPE WEBHOOK
+  // ==========================================
+
+  async handleWebhook(rawBody: Buffer, signature: string) {
+    // ==========================================
+    // CHECK SIGNATURE
+    // ==========================================
+
+    if (!signature) {
+      throw new ConflictException('Stripe signature is missing');
+    }
+
+    if (!rawBody) {
+      throw new ConflictException('Stripe raw body is missing');
+    }
+
+    let event: Stripe.Event;
+
+    // ==========================================
+    // VERIFY STRIPE WEBHOOK
+    // ==========================================
+
+    try {
+      event = this.stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET as string,
+      );
+    } catch (error) {
+      console.error('Stripe webhook verification failed:', error);
+
+      throw new ConflictException('Invalid Stripe webhook signature');
+    }
+
+    console.log(`Stripe webhook received: ${event.type}`);
+
+    // ==========================================
+    // HANDLE STRIPE EVENTS
+    // ==========================================
+
+    switch (event.type) {
+      // ----------------------------------------
+      // CHECKOUT COMPLETED
+      // ----------------------------------------
+
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+
+        await this.handleCheckoutCompleted(session);
+
+        break;
+      }
+
+      // ----------------------------------------
+      // CHECKOUT EXPIRED
+      // ----------------------------------------
+
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session;
+
+        await this.handleCheckoutExpired(session);
+
+        break;
+      }
+
+      // ----------------------------------------
+      // PAYMENT FAILED
+      // ----------------------------------------
+
+      case 'payment_intent.payment_failed': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+
+        await this.handlePaymentFailed(paymentIntent);
+
+        break;
+      }
+
+      // ----------------------------------------
+      // OTHER EVENTS
+      // ----------------------------------------
+
+      default: {
+        console.log(`Unhandled Stripe event: ${event.type}`);
+      }
+    }
+
+    // ==========================================
+    // RESPONSE TO STRIPE
+    // ==========================================
+
+    return {
+      received: true,
+    };
+  }
+
+  // ==========================================
+  // CHECKOUT SESSION COMPLETED
+  // ==========================================
+
+  private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+    const paymentId = session.metadata?.payment_id;
+
+    const orderId = session.metadata?.order_id;
+
+    const transactionId = session.metadata?.transaction_id;
+
+    if (!paymentId || !orderId) {
+      console.error('Stripe metadata is missing');
+
+      return;
+    }
+
+    // ==========================================
+    // FIND PAYMENT
+    // ==========================================
+
+    const payment = await this.paymentRepository.findOne({
+      where: {
+        id: Number(paymentId),
+      },
+    });
+
+    if (!payment) {
+      console.error(`Payment ${paymentId} not found`);
+
+      return;
+    }
+
+    // ==========================================
+    // IDEMPOTENCY
+    // ==========================================
+
+    if (payment.status === PaymentStatus.PAID) {
+      console.log(`Payment ${payment.id} already marked as PAID`);
+
+      return;
+    }
+
+    // ==========================================
+    // CHECK PAYMENT STATUS
+    // ==========================================
+
+    if (session.payment_status !== 'paid') {
+      console.log(
+        `Checkout completed but payment status is ${session.payment_status}`,
+      );
+
+      return;
+    }
+
+    // ==========================================
+    // UPDATE PAYMENT
+    // ==========================================
+
+    payment.status = PaymentStatus.PAID;
+
+    payment.paid_at = new Date();
+
+    if (transactionId) {
+      payment.transaction_id = transactionId;
+    }
+
+    await this.paymentRepository.save(payment);
+
+    console.log(`Payment ${payment.id} marked as PAID`);
+
+    // ==========================================
+    // FIND ORDER
+    // ==========================================
+
+    const order = await this.orderRepository.findOne({
+      where: {
+        id: Number(orderId),
+      },
+    });
+
+    if (!order) {
+      console.error(`Order ${orderId} not found`);
+
+      return;
+    }
+
+    // ==========================================
+    // KEEP ORDER STATUS
+    // ==========================================
+    //
+    // APPROVED order remains APPROVED.
+    //
+    // Payment status is stored in Payment table.
+    //
+    // Later চাইলে এখানে:
+    //
+    // order.status = OrderStatus.ACTIVE;
+    //
+    // করা যাবে.
+    // ==========================================
+
+    console.log(`Payment completed successfully for Order #${order.id}`);
+  }
+
+  // ==========================================
+  // CHECKOUT EXPIRED
+  // ==========================================
+
+  private async handleCheckoutExpired(session: Stripe.Checkout.Session) {
+    const paymentId = session.metadata?.payment_id;
+
+    if (!paymentId) {
+      return;
+    }
+
+    const payment = await this.paymentRepository.findOne({
+      where: {
+        id: Number(paymentId),
+      },
+    });
+
+    if (!payment) {
+      return;
+    }
+
+    // Already paid হলে change করবে না
+    if (payment.status === PaymentStatus.PAID) {
+      return;
+    }
+
+    payment.status = PaymentStatus.FAILED;
+
+    await this.paymentRepository.save(payment);
+
+    console.log(`Payment ${payment.id} marked as FAILED`);
+  }
+
+  // ==========================================
+  // PAYMENT INTENT FAILED
+  // ==========================================
+
+  private async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
+    console.log('Stripe payment failed:', paymentIntent.id);
+
+    // ==========================================
+    // PAYMENT INTENT METADATA
+    // ==========================================
+
+    const paymentId = paymentIntent.metadata?.payment_id;
+
+    const transactionId = paymentIntent.metadata?.transaction_id;
+
+    let payment: Payment | null = null;
+
+    // ==========================================
+    // FIND USING PAYMENT ID
+    // ==========================================
+
+    if (paymentId) {
+      payment = await this.paymentRepository.findOne({
+        where: {
+          id: Number(paymentId),
+        },
+      });
+    }
+
+    // ==========================================
+    // FIND USING TRANSACTION ID
+    // ==========================================
+
+    if (!payment && transactionId) {
+      payment = await this.paymentRepository.findOne({
+        where: {
+          transaction_id: transactionId,
+        },
+      });
+    }
+
+    if (!payment) {
+      console.log('Payment record not found for failed PaymentIntent');
+
+      return;
+    }
+
+    // ==========================================
+    // DON'T OVERWRITE PAID
+    // ==========================================
+
+    if (payment.status === PaymentStatus.PAID) {
+      return;
+    }
+
+    // ==========================================
+    // MARK FAILED
+    // ==========================================
+
+    payment.status = PaymentStatus.FAILED;
+
+    await this.paymentRepository.save(payment);
+
+    console.log(`Payment ${payment.id} marked as FAILED`);
   }
 }

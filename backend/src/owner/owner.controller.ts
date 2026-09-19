@@ -136,7 +136,7 @@ export class OwnerController {
       },
 
       storage: diskStorage({
-        destination: './uploads/owner_profile',
+        destination: './uploads',
         filename: (req, file, cb) => {
           cb(null, Date.now() + file.originalname);
         },
