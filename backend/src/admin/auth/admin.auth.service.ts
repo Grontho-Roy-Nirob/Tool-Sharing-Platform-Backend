@@ -21,10 +21,7 @@ export class AdminAuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  // ==========================================
   // ADMIN LOGIN
-  // ==========================================
-
   async login(loginAdminDto: LoginAdminDto) {
     const { email, password } = loginAdminDto;
 
@@ -56,7 +53,6 @@ export class AdminAuthService {
     };
 
     // Secret and expiration are configured
-    // inside AdminAuthModule
     const token = await this.jwtService.signAsync(payload);
 
     return {
@@ -73,11 +69,7 @@ export class AdminAuthService {
     };
   }
 
-  // ==========================================
-  // TEMPORARY ADMIN CREATION
-  // TODO: REMOVE AFTER CREATING INITIAL ADMIN
-  // ==========================================
-
+  // ADMIN CREATION
   async createAdmin(createAdminDto: CreateAdminDto) {
     const { full_name, email, password, phone, profile_image, role } =
       createAdminDto;

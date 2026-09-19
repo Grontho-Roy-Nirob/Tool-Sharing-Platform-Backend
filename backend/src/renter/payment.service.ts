@@ -27,15 +27,9 @@ export class PaymentService {
     this.stripe = new Stripe(process.env.STRIPE_SECRIT_KEY as string);
   }
 
-  // ==========================================
   // CREATE STRIPE CHECKOUT SESSION
-  // ==========================================
-
   async createPayment(renterId: number, orderId: number) {
-    // ==========================================
     // FIND ORDER
-    // ==========================================
-
     const order = await this.orderRepository.findOne({
       where: {
         id: orderId,
@@ -52,68 +46,46 @@ export class PaymentService {
       throw new NotFoundException('Order not found');
     }
 
-    // ==========================================
     // CHECK ORDER STATUS
-    // ==========================================
-
     if (order.status !== OrderStatus.APPROVED) {
       throw new ConflictException('Only approved orders can be paid');
     }
 
-    // ==========================================
     // CHECK TOOLS
-    // ==========================================
-
     if (!order.tools || order.tools.length === 0) {
       throw new ConflictException('No tools found in this order');
     }
 
-    // ==========================================
     // CHECK EXISTING PAYMENT
-    // ==========================================
-
     const existingPayment = await this.paymentRepository.findOne({
       where: {
         order_id: orderId,
       },
     });
 
-    // Already PAID হলে আবার payment করতে পারবে না
     if (existingPayment?.status === PaymentStatus.PAID) {
       throw new ConflictException('Order has already been paid');
     }
 
-    // ==========================================
     // ORDER TOTAL
-    // ==========================================
-
     const amount = Number(order.total_amount);
 
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new ConflictException('Invalid order amount');
     }
 
-    // ==========================================
     // STRIPE AMOUNT
-    // ==========================================
-
     const stripeAmount = Math.round(amount * 100);
 
     if (stripeAmount <= 0) {
       throw new ConflictException('Invalid Stripe amount');
     }
 
-    // ==========================================
     // TRANSACTION ID
-    // ==========================================
-
     const transactionId =
       existingPayment?.transaction_id ?? `TS-${order.id}-${Date.now()}`;
 
-    // ==========================================
     // CREATE PAYMENT RECORD
-    // ==========================================
-
     let payment = existingPayment;
 
     if (!payment) {
@@ -133,20 +105,14 @@ export class PaymentService {
 
       await this.paymentRepository.save(payment);
     } else {
-      // ==========================================
       // REUSE OLD CANCELLED / FAILED PAYMENT
-      // ==========================================
-
       payment.status = PaymentStatus.PENDING;
       payment.paid_at = null;
 
       await this.paymentRepository.save(payment);
     }
 
-    // ==========================================
     // CREATE STRIPE LINE ITEMS
-    // ==========================================
-
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
       order.tools.map((tool) => {
         const pricePerDay = Number(tool.rental_price_per_day);
@@ -178,10 +144,7 @@ export class PaymentService {
         };
       });
 
-    // ==========================================
     // CREATE STRIPE CHECKOUT SESSION
-    // ==========================================
-
     const session = await this.stripe.checkout.sessions.create({
       mode: 'payment',
 
@@ -206,10 +169,7 @@ export class PaymentService {
       cancel_url: process.env.STRIPE_CANCEL_URL,
     });
 
-    // ==========================================
     // RESPONSE
-    // ==========================================
-
     return {
       message: 'Stripe checkout session created',
 
@@ -223,11 +183,8 @@ export class PaymentService {
     };
   }
 
-  // ==========================================
   // GET PAYMENT STATUS
   // GET /payment/status/:orderId
-  // ==========================================
-
   async getPaymentStatus(renterId: number, orderId: number) {
     // ==========================================
     // FIND ORDER
@@ -244,27 +201,20 @@ export class PaymentService {
       throw new NotFoundException('Order not found');
     }
 
-    // ==========================================
     // FIND PAYMENT
-    // ==========================================
-
     const payment = await this.paymentRepository.findOne({
       where: {
         order_id: orderId,
       },
     });
 
-    // Payment record না থাকলে unpaid
     if (!payment) {
       return {
         payment_status: 'unpaid',
       };
     }
 
-    // ==========================================
     // RETURN FRONTEND STATUS
-    // ==========================================
-
     if (payment.status === PaymentStatus.PAID) {
       return {
         payment_status: 'paid',
@@ -277,21 +227,14 @@ export class PaymentService {
       };
     }
 
-    // PENDING / FAILED হলে frontend-এ unpaid
     return {
       payment_status: 'unpaid',
     };
   }
 
-  // ==========================================
   // STRIPE WEBHOOK
-  // ==========================================
-
   async handleWebhook(rawBody: Buffer, signature: string) {
-    // ==========================================
     // CHECK SIGNATURE
-    // ==========================================
-
     if (!signature) {
       throw new ConflictException('Stripe signature is missing');
     }
@@ -302,10 +245,7 @@ export class PaymentService {
 
     let event: Stripe.Event;
 
-    // ==========================================
     // VERIFY STRIPE WEBHOOK
-    // ==========================================
-
     try {
       event = this.stripe.webhooks.constructEvent(
         rawBody,
@@ -320,15 +260,8 @@ export class PaymentService {
 
     console.log(`Stripe webhook received: ${event.type}`);
 
-    // ==========================================
     // HANDLE STRIPE EVENTS
-    // ==========================================
-
     switch (event.type) {
-      // ----------------------------------------
-      // CHECKOUT COMPLETED
-      // ----------------------------------------
-
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
 
@@ -337,10 +270,7 @@ export class PaymentService {
         break;
       }
 
-      // ----------------------------------------
       // CHECKOUT EXPIRED
-      // ----------------------------------------
-
       case 'checkout.session.expired': {
         const session = event.data.object as Stripe.Checkout.Session;
 
@@ -349,10 +279,7 @@ export class PaymentService {
         break;
       }
 
-      // ----------------------------------------
       // PAYMENT FAILED
-      // ----------------------------------------
-
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
 
@@ -361,28 +288,19 @@ export class PaymentService {
         break;
       }
 
-      // ----------------------------------------
       // OTHER EVENTS
-      // ----------------------------------------
-
       default: {
         console.log(`Unhandled Stripe event: ${event.type}`);
       }
     }
 
-    // ==========================================
     // RESPONSE TO STRIPE
-    // ==========================================
-
     return {
       received: true,
     };
   }
 
-  // ==========================================
   // CHECKOUT SESSION COMPLETED
-  // ==========================================
-
   private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const paymentId = session.metadata?.payment_id;
 
@@ -396,10 +314,7 @@ export class PaymentService {
       return;
     }
 
-    // ==========================================
     // FIND PAYMENT
-    // ==========================================
-
     const payment = await this.paymentRepository.findOne({
       where: {
         id: Number(paymentId),
@@ -412,20 +327,14 @@ export class PaymentService {
       return;
     }
 
-    // ==========================================
     // IDEMPOTENCY
-    // ==========================================
-
     if (payment.status === PaymentStatus.PAID) {
       console.log(`Payment ${payment.id} already marked as PAID`);
 
       return;
     }
 
-    // ==========================================
     // CHECK PAYMENT STATUS
-    // ==========================================
-
     if (session.payment_status !== 'paid') {
       console.log(
         `Checkout completed but payment status is ${session.payment_status}`,
@@ -434,12 +343,8 @@ export class PaymentService {
       return;
     }
 
-    // ==========================================
     // UPDATE PAYMENT
-    // ==========================================
-
     payment.status = PaymentStatus.PAID;
-
     payment.paid_at = new Date();
 
     if (transactionId) {
@@ -450,10 +355,7 @@ export class PaymentService {
 
     console.log(`Payment ${payment.id} marked as PAID`);
 
-    // ==========================================
     // FIND ORDER
-    // ==========================================
-
     const order = await this.orderRepository.findOne({
       where: {
         id: Number(orderId),
@@ -466,17 +368,10 @@ export class PaymentService {
       return;
     }
 
-    // ==========================================
-    // KEEP ORDER STATUS
-    // ==========================================
-
     console.log(`Payment completed successfully for Order #${order.id}`);
   }
 
-  // ==========================================
   // CHECKOUT EXPIRED
-  // ==========================================
-
   private async handleCheckoutExpired(session: Stripe.Checkout.Session) {
     const paymentId = session.metadata?.payment_id;
 
@@ -494,43 +389,26 @@ export class PaymentService {
       return;
     }
 
-    // Already paid হলে change করবে না
     if (payment.status === PaymentStatus.PAID) {
       return;
     }
 
-    // ==========================================
     // MARK CANCELLED
-    // ==========================================
-
     payment.status = PaymentStatus.CANCELLED;
-
     await this.paymentRepository.save(payment);
-
     console.log(`Payment ${payment.id} marked as CANCELLED`);
   }
 
-  // ==========================================
   // PAYMENT INTENT FAILED
-  // ==========================================
-
   private async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     console.log('Stripe payment failed:', paymentIntent.id);
 
-    // ==========================================
     // PAYMENT INTENT METADATA
-    // ==========================================
-
     const paymentId = paymentIntent.metadata?.payment_id;
-
     const transactionId = paymentIntent.metadata?.transaction_id;
-
     let payment: Payment | null = null;
 
-    // ==========================================
     // FIND USING PAYMENT ID
-    // ==========================================
-
     if (paymentId) {
       payment = await this.paymentRepository.findOne({
         where: {
@@ -539,10 +417,7 @@ export class PaymentService {
       });
     }
 
-    // ==========================================
     // FIND USING TRANSACTION ID
-    // ==========================================
-
     if (!payment && transactionId) {
       payment = await this.paymentRepository.findOne({
         where: {
@@ -557,22 +432,14 @@ export class PaymentService {
       return;
     }
 
-    // ==========================================
     // DON'T OVERWRITE PAID
-    // ==========================================
-
     if (payment.status === PaymentStatus.PAID) {
       return;
     }
 
-    // ==========================================
     // MARK CANCELLED
-    // ==========================================
-
     payment.status = PaymentStatus.CANCELLED;
-
     await this.paymentRepository.save(payment);
-
     console.log(`Payment ${payment.id} marked as CANCELLED`);
   }
 }

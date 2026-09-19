@@ -28,19 +28,15 @@ export class OrderListService {
     private readonly renterRepository: Repository<Renter>,
   ) {}
 
-  // ==========================================
-  // CREATE ORDER
-  // ==========================================
 
+  // CREATE ORDER
   async create(renterId: number, dto: CreateOrderListDto) {
     console.log('========== CREATE ORDER ==========');
     console.log('Renter ID:', renterId);
     console.log('DTO:', dto);
 
-    // ------------------------------------------
-    // Validate request
-    // ------------------------------------------
 
+    // Validate request
     if (!dto) {
       throw new BadRequestException('Order data is required');
     }
@@ -59,20 +55,16 @@ export class OrderListService {
       throw new BadRequestException('end_date is required');
     }
 
-    // ------------------------------------------
-    // Remove duplicate tool IDs
-    // ------------------------------------------
 
+    // Remove duplicate tool IDs
     const uniqueToolIds = [...new Set(tool_ids.map((id) => Number(id)))];
 
     if (uniqueToolIds.some((id) => isNaN(id))) {
       throw new BadRequestException('All tool_ids must be valid numbers');
     }
 
-    // ------------------------------------------
-    // Find renter
-    // ------------------------------------------
 
+    // Find renter
     const renter = await this.renterRepository.findOne({
       where: {
         renterId,
@@ -83,20 +75,16 @@ export class OrderListService {
       throw new NotFoundException('Renter not found');
     }
 
-    // ------------------------------------------
+   
     // Find all tools
-    // ------------------------------------------
-
     const tools = await this.toolRepository.find({
       where: {
         id: In(uniqueToolIds),
       },
     });
 
-    // ------------------------------------------
-    // Check all tools exist
-    // ------------------------------------------
 
+    // Check all tools exist
     if (tools.length !== uniqueToolIds.length) {
       const foundToolIds = tools.map((tool) => tool.id);
 
@@ -109,10 +97,8 @@ export class OrderListService {
       );
     }
 
-    // ------------------------------------------
-    // Check tool availability
-    // ------------------------------------------
 
+    // Check tool availability
     const unavailableTools = tools.filter((tool) => !tool.is_available);
 
     if (unavailableTools.length > 0) {
@@ -123,10 +109,8 @@ export class OrderListService {
       );
     }
 
-    // ------------------------------------------
-    // Convert dates
-    // ------------------------------------------
 
+    // Convert dates
     const startDate = new Date(start_date);
     const endDate = new Date(end_date);
 
@@ -138,28 +122,22 @@ export class OrderListService {
       throw new BadRequestException('Invalid end_date');
     }
 
-    // ------------------------------------------
+  
     // Validate date range
-    // ------------------------------------------
-
     if (endDate <= startDate) {
       throw new BadRequestException('End date must be after start date');
     }
 
-    // ------------------------------------------
-    // Calculate duration
-    // ------------------------------------------
 
+    // Calculate duration
     const millisecondsPerDay = 1000 * 60 * 60 * 24;
 
     const durationDays = Math.ceil(
       (endDate.getTime() - startDate.getTime()) / millisecondsPerDay,
     );
 
-    // ------------------------------------------
+   
     // Calculate total price
-    // ------------------------------------------
-
     let totalAmount = 0;
 
     for (const tool of tools) {
@@ -174,10 +152,8 @@ export class OrderListService {
       totalAmount += pricePerDay * durationDays;
     }
 
-    // ------------------------------------------
-    // Create order
-    // ------------------------------------------
 
+    // Create order
     const order = this.orderRepository.create({
       renter_id: renterId,
 
@@ -195,10 +171,8 @@ export class OrderListService {
       message: message ?? null,
     });
 
-    // ------------------------------------------
-    // Save order
-    // ------------------------------------------
 
+    // Save order
     const savedOrder = await this.orderRepository.save(order);
 
     console.log('Created Order:', savedOrder);
@@ -212,10 +186,8 @@ export class OrderListService {
     return savedOrder;
   }
 
-  // ==========================================
-  // GET MY ORDERS
-  // ==========================================
 
+  // GET MY ORDERS
   async getMyOrders(renterId: number) {
     const orders = await this.orderRepository.find({
       where: {
