@@ -26,10 +26,8 @@ export class AdminService {
     return this.adminRepo.find();
   }
 
-  // ==========================================
-  // TOOL MANAGEMENT
-  // ==========================================
 
+  // TOOL MANAGEMENT
   async updateToolStatus(toolId: number, dto: UpdateToolStatusDto) {
     const tool = await this.toolRepo.findOne({
       where: {

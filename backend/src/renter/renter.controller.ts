@@ -31,11 +31,7 @@ export class RenterController {
     private readonly orderListService: OrderListService,
   ) {}
 
-  // ==========================================
-  // CREATE RENTER
   // POST /renter
-  // ==========================================
-
   @Post()
   @UsePipes(
     new ValidationPipe({
@@ -47,22 +43,14 @@ export class RenterController {
     return this.renterService.create(createRenterDto);
   }
 
-  // ==========================================
-  // GET ALL RENTERS
   // GET /renter
-  // ==========================================
-
   @UseGuards(RenterAuthGuard)
   @Get()
   findAll() {
     return this.renterService.findAll();
   }
 
-  // ==========================================
-  // CREATE RENTAL ORDER
   // POST /renter/orders
-  // ==========================================
-
   @UseGuards(RenterAuthGuard)
   @Post('orders')
   @UsePipes(
@@ -84,22 +72,14 @@ export class RenterController {
     return this.orderListService.getMyOrders(req.user.sub);
   }
 
-  // ==========================================
-  // GET RENTER BY ID
   // GET /renter/:id
-  // ==========================================
-
   @UseGuards(RenterAuthGuard)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.renterService.findOne(id);
   }
 
-  // ==========================================
-  // UPDATE RENTER
   // PATCH /renter/:id
-  // ==========================================
-
   @UseGuards(RenterAuthGuard)
   @Patch(':id')
   @UseInterceptors(
@@ -145,11 +125,7 @@ export class RenterController {
     return this.renterService.update(id, updateRenterDto);
   }
 
-  // ==========================================
-  // DELETE RENTER
   // DELETE /renter/:id
-  // ==========================================
-
   @UseGuards(RenterAuthGuard)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {

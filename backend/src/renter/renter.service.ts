@@ -50,7 +50,6 @@ export class RenterService {
     }
 
     await this.renterRepository.update({ renterId: id }, updateRenterDto);
-
     return this.findOne(id);
   }
 

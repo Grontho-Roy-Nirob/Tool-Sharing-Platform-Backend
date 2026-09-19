@@ -19,11 +19,9 @@ import { RenterAuthGuard } from '../renter/auth/renter.auth.guard';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  // ==========================================
+
   // CREATE STRIPE PAYMENT
   // POST /payment/create
-  // ==========================================
-
   @UseGuards(RenterAuthGuard)
   @Post('create')
   @UsePipes(
@@ -36,22 +34,17 @@ export class PaymentController {
     return this.paymentService.createPayment(req.user.sub, dto.order_id);
   }
 
-  // ==========================================
+
   // GET PAYMENT STATUS
   // GET /payment/status/:orderId
-  // ==========================================
-
   @UseGuards(RenterAuthGuard)
   @Get('status/:orderId')
   getPaymentStatus(@Req() req: any, @Param('orderId') orderId: string) {
     return this.paymentService.getPaymentStatus(req.user.sub, Number(orderId));
   }
 
-  // ==========================================
   // STRIPE WEBHOOK
   // POST /payment/webhook
-  // ==========================================
-
   @Post('webhook')
   handleStripeWebhook(
     @Req() req: any,

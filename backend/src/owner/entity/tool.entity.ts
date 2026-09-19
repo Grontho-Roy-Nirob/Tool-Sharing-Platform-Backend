@@ -64,11 +64,8 @@ export class ToolEntity {
   tool_image!: string;
 
   // Relationship with Category
-
   // @ManyToOne(() => CategoryEntity, (category) => category.tools)
   // category!: CategoryEntity;
-
-  //change mahib made
   @Column({ name: 'category_id' })
   category_id!: number;
 
