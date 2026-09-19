@@ -25,7 +25,7 @@ export class RenterAuthController {
   @UseInterceptors(
     FileInterceptor('profileImage', {
       storage: diskStorage({
-        destination: './uploads/renter_profile',
+        destination: './uploads',
         filename: (req, file, cb) => {
           cb(null, `${Date.now()}${extname(file.originalname)}`);
         },

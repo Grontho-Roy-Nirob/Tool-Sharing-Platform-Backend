@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Headers,
   Post,
   Req,
   UseGuards,
@@ -33,5 +34,18 @@ export class PaymentController {
   )
   createPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
     return this.paymentService.createPayment(req.user.sub, dto.order_id);
+  }
+
+  // ==========================================
+  // STRIPE WEBHOOK
+  // POST /payment/webhook
+  // ==========================================
+
+  @Post('webhook')
+  handleStripeWebhook(
+    @Req() req: any,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    return this.paymentService.handleWebhook(req.rawBody, signature);
   }
 }

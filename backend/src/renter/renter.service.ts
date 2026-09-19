@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateRenterDto, UpdateRenterDto } from './dto/renter.dto';
 import { Renter } from './entity/renter.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class RenterService {
@@ -41,7 +42,15 @@ export class RenterService {
     id: number,
     updateRenterDto: UpdateRenterDto,
   ): Promise<Renter | null> {
-    await this.renterRepository.update(id, updateRenterDto);
+    if (updateRenterDto.password) {
+      updateRenterDto.password = await bcrypt.hash(
+        updateRenterDto.password,
+        10,
+      );
+    }
+
+    await this.renterRepository.update({ renterId: id }, updateRenterDto);
+
     return this.findOne(id);
   }
 
