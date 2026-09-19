@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
+  Param,
   Post,
   Req,
   UseGuards,
@@ -32,6 +34,17 @@ export class PaymentController {
   )
   createPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
     return this.paymentService.createPayment(req.user.sub, dto.order_id);
+  }
+
+  // ==========================================
+  // GET PAYMENT STATUS
+  // GET /payment/status/:orderId
+  // ==========================================
+
+  @UseGuards(RenterAuthGuard)
+  @Get('status/:orderId')
+  getPaymentStatus(@Req() req: any, @Param('orderId') orderId: string) {
+    return this.paymentService.getPaymentStatus(req.user.sub, Number(orderId));
   }
 
   // ==========================================
