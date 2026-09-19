@@ -27,7 +27,10 @@ export class PaymentService {
     this.stripe = new Stripe(process.env.STRIPE_SECRIT_KEY as string);
   }
 
+  // ==========================================
   // CREATE STRIPE CHECKOUT SESSION
+  // ==========================================
+
   async createPayment(renterId: number, orderId: number) {
     // ==========================================
     // FIND ORDER
@@ -75,6 +78,7 @@ export class PaymentService {
       },
     });
 
+    // Already PAID হলে আবার payment করতে পারবে না
     if (existingPayment?.status === PaymentStatus.PAID) {
       throw new ConflictException('Order has already been paid');
     }
@@ -126,6 +130,15 @@ export class PaymentService {
 
         paid_at: null,
       });
+
+      await this.paymentRepository.save(payment);
+    } else {
+      // ==========================================
+      // REUSE OLD CANCELLED / FAILED PAYMENT
+      // ==========================================
+
+      payment.status = PaymentStatus.PENDING;
+      payment.paid_at = null;
 
       await this.paymentRepository.save(payment);
     }
@@ -207,6 +220,66 @@ export class PaymentService {
       amount: payment.amount,
 
       checkout_url: session.url,
+    };
+  }
+
+  // ==========================================
+  // GET PAYMENT STATUS
+  // GET /payment/status/:orderId
+  // ==========================================
+
+  async getPaymentStatus(renterId: number, orderId: number) {
+    // ==========================================
+    // FIND ORDER
+    // ==========================================
+
+    const order = await this.orderRepository.findOne({
+      where: {
+        id: orderId,
+        renter_id: renterId,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // ==========================================
+    // FIND PAYMENT
+    // ==========================================
+
+    const payment = await this.paymentRepository.findOne({
+      where: {
+        order_id: orderId,
+      },
+    });
+
+    // Payment record না থাকলে unpaid
+    if (!payment) {
+      return {
+        payment_status: 'unpaid',
+      };
+    }
+
+    // ==========================================
+    // RETURN FRONTEND STATUS
+    // ==========================================
+
+    if (payment.status === PaymentStatus.PAID) {
+      return {
+        payment_status: 'paid',
+      };
+    }
+
+    if (payment.status === PaymentStatus.CANCELLED) {
+      return {
+        payment_status: 'cancelled',
+      };
+    }
+
+    // PENDING / FAILED হলে frontend-এ unpaid
+    return {
+      payment_status: 'unpaid',
     };
   }
 
@@ -396,17 +469,6 @@ export class PaymentService {
     // ==========================================
     // KEEP ORDER STATUS
     // ==========================================
-    //
-    // APPROVED order remains APPROVED.
-    //
-    // Payment status is stored in Payment table.
-    //
-    // Later চাইলে এখানে:
-    //
-    // order.status = OrderStatus.ACTIVE;
-    //
-    // করা যাবে.
-    // ==========================================
 
     console.log(`Payment completed successfully for Order #${order.id}`);
   }
@@ -437,11 +499,15 @@ export class PaymentService {
       return;
     }
 
-    payment.status = PaymentStatus.FAILED;
+    // ==========================================
+    // MARK CANCELLED
+    // ==========================================
+
+    payment.status = PaymentStatus.CANCELLED;
 
     await this.paymentRepository.save(payment);
 
-    console.log(`Payment ${payment.id} marked as FAILED`);
+    console.log(`Payment ${payment.id} marked as CANCELLED`);
   }
 
   // ==========================================
@@ -500,13 +566,13 @@ export class PaymentService {
     }
 
     // ==========================================
-    // MARK FAILED
+    // MARK CANCELLED
     // ==========================================
 
-    payment.status = PaymentStatus.FAILED;
+    payment.status = PaymentStatus.CANCELLED;
 
     await this.paymentRepository.save(payment);
 
-    console.log(`Payment ${payment.id} marked as FAILED`);
+    console.log(`Payment ${payment.id} marked as CANCELLED`);
   }
 }
