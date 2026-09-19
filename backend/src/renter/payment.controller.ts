@@ -10,9 +10,7 @@ import {
 } from '@nestjs/common';
 
 import { PaymentService } from './payment.service';
-
 import { CreatePaymentDto } from './dto/payment.dto';
-
 import { RenterAuthGuard } from '../renter/auth/renter.auth.guard';
 
 @Controller('payment')

@@ -27,10 +27,7 @@ export class PaymentService {
     this.stripe = new Stripe(process.env.STRIPE_SECRIT_KEY as string);
   }
 
-  // ==========================================
   // CREATE STRIPE CHECKOUT SESSION
-  // ==========================================
-
   async createPayment(renterId: number, orderId: number) {
     // ==========================================
     // FIND ORDER
