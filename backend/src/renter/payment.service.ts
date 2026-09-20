@@ -27,7 +27,9 @@ export class PaymentService {
     this.stripe = new Stripe(process.env.STRIPE_SECRIT_KEY as string);
   }
 
+  // ==========================================
   // CREATE STRIPE CHECKOUT SESSION
+  // ==========================================
   async createPayment(renterId: number, orderId: number) {
     // FIND ORDER
     const order = await this.orderRepository.findOne({
@@ -91,15 +93,10 @@ export class PaymentService {
     if (!payment) {
       payment = this.paymentRepository.create({
         order_id: order.id,
-
         order,
-
         transaction_id: transactionId,
-
         amount,
-
         status: PaymentStatus.PENDING,
-
         paid_at: null,
       });
 
@@ -156,9 +153,7 @@ export class PaymentService {
 
       metadata: {
         order_id: String(order.id),
-
         payment_id: String(payment.id),
-
         transaction_id: payment.transaction_id,
       },
 
@@ -183,13 +178,12 @@ export class PaymentService {
     };
   }
 
+  // ==========================================
   // GET PAYMENT STATUS
   // GET /payment/status/:orderId
+  // ==========================================
   async getPaymentStatus(renterId: number, orderId: number) {
-    // ==========================================
     // FIND ORDER
-    // ==========================================
-
     const order = await this.orderRepository.findOne({
       where: {
         id: orderId,
@@ -232,7 +226,9 @@ export class PaymentService {
     };
   }
 
+  // ==========================================
   // STRIPE WEBHOOK
+  // ==========================================
   async handleWebhook(rawBody: Buffer, signature: string) {
     // CHECK SIGNATURE
     if (!signature) {
@@ -262,6 +258,7 @@ export class PaymentService {
 
     // HANDLE STRIPE EVENTS
     switch (event.type) {
+      // PAYMENT SUCCESS
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
 
@@ -300,7 +297,9 @@ export class PaymentService {
     };
   }
 
+  // ==========================================
   // CHECKOUT SESSION COMPLETED
+  // ==========================================
   private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const paymentId = session.metadata?.payment_id;
 
@@ -343,8 +342,12 @@ export class PaymentService {
       return;
     }
 
+    // ==========================================
     // UPDATE PAYMENT
+    // ==========================================
+
     payment.status = PaymentStatus.PAID;
+
     payment.paid_at = new Date();
 
     if (transactionId) {
@@ -355,7 +358,10 @@ export class PaymentService {
 
     console.log(`Payment ${payment.id} marked as PAID`);
 
+    // ==========================================
     // FIND ORDER
+    // ==========================================
+
     const order = await this.orderRepository.findOne({
       where: {
         id: Number(orderId),
@@ -368,10 +374,25 @@ export class PaymentService {
       return;
     }
 
+    // ==========================================
+    // PAYMENT SUCCESS
+    // APPROVED -> ACTIVE
+    // ==========================================
+
+    if (order.status === OrderStatus.APPROVED) {
+      order.status = OrderStatus.ACTIVE;
+
+      await this.orderRepository.save(order);
+
+      console.log(`Order #${order.id} status changed from APPROVED to ACTIVE`);
+    }
+
     console.log(`Payment completed successfully for Order #${order.id}`);
   }
 
+  // ==========================================
   // CHECKOUT EXPIRED
+  // ==========================================
   private async handleCheckoutExpired(session: Stripe.Checkout.Session) {
     const paymentId = session.metadata?.payment_id;
 
@@ -395,17 +416,23 @@ export class PaymentService {
 
     // MARK CANCELLED
     payment.status = PaymentStatus.CANCELLED;
+
     await this.paymentRepository.save(payment);
+
     console.log(`Payment ${payment.id} marked as CANCELLED`);
   }
 
+  // ==========================================
   // PAYMENT INTENT FAILED
+  // ==========================================
   private async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     console.log('Stripe payment failed:', paymentIntent.id);
 
     // PAYMENT INTENT METADATA
     const paymentId = paymentIntent.metadata?.payment_id;
+
     const transactionId = paymentIntent.metadata?.transaction_id;
+
     let payment: Payment | null = null;
 
     // FIND USING PAYMENT ID
@@ -439,7 +466,9 @@ export class PaymentService {
 
     // MARK CANCELLED
     payment.status = PaymentStatus.CANCELLED;
+
     await this.paymentRepository.save(payment);
+
     console.log(`Payment ${payment.id} marked as CANCELLED`);
   }
 }
