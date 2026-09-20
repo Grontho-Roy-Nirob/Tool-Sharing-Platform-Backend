@@ -6,11 +6,8 @@ import {
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
 import Stripe from 'stripe';
-
 import { Payment, PaymentStatus } from './entity/payment.entity';
-
 import { OrderList, OrderStatus } from '../renter/entity/orderlist.entity';
 
 @Injectable()
@@ -27,9 +24,8 @@ export class PaymentService {
     this.stripe = new Stripe(process.env.STRIPE_SECRIT_KEY as string);
   }
 
-  // ==========================================
+
   // CREATE STRIPE CHECKOUT SESSION
-  // ==========================================
   async createPayment(renterId: number, orderId: number) {
     // FIND ORDER
     const order = await this.orderRepository.findOne({
@@ -178,10 +174,9 @@ export class PaymentService {
     };
   }
 
-  // ==========================================
-  // GET PAYMENT STATUS
+
+
   // GET /payment/status/:orderId
-  // ==========================================
   async getPaymentStatus(renterId: number, orderId: number) {
     // FIND ORDER
     const order = await this.orderRepository.findOne({
@@ -226,9 +221,8 @@ export class PaymentService {
     };
   }
 
-  // ==========================================
+
   // STRIPE WEBHOOK
-  // ==========================================
   async handleWebhook(rawBody: Buffer, signature: string) {
     // CHECK SIGNATURE
     if (!signature) {
@@ -297,9 +291,8 @@ export class PaymentService {
     };
   }
 
-  // ==========================================
+
   // CHECKOUT SESSION COMPLETED
-  // ==========================================
   private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const paymentId = session.metadata?.payment_id;
 
@@ -342,10 +335,8 @@ export class PaymentService {
       return;
     }
 
-    // ==========================================
-    // UPDATE PAYMENT
-    // ==========================================
 
+    // UPDATE PAYMENT
     payment.status = PaymentStatus.PAID;
 
     payment.paid_at = new Date();
@@ -358,10 +349,8 @@ export class PaymentService {
 
     console.log(`Payment ${payment.id} marked as PAID`);
 
-    // ==========================================
-    // FIND ORDER
-    // ==========================================
 
+    // FIND ORDER
     const order = await this.orderRepository.findOne({
       where: {
         id: Number(orderId),
@@ -374,11 +363,8 @@ export class PaymentService {
       return;
     }
 
-    // ==========================================
-    // PAYMENT SUCCESS
-    // APPROVED -> ACTIVE
-    // ==========================================
 
+    // APPROVED -> ACTIVE
     if (order.status === OrderStatus.APPROVED) {
       order.status = OrderStatus.ACTIVE;
 
@@ -390,9 +376,8 @@ export class PaymentService {
     console.log(`Payment completed successfully for Order #${order.id}`);
   }
 
-  // ==========================================
+
   // CHECKOUT EXPIRED
-  // ==========================================
   private async handleCheckoutExpired(session: Stripe.Checkout.Session) {
     const paymentId = session.metadata?.payment_id;
 
@@ -422,9 +407,8 @@ export class PaymentService {
     console.log(`Payment ${payment.id} marked as CANCELLED`);
   }
 
-  // ==========================================
+
   // PAYMENT INTENT FAILED
-  // ==========================================
   private async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     console.log('Stripe payment failed:', paymentIntent.id);
 
